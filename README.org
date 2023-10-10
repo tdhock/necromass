@@ -1,0 +1,11 @@
+** TODOs
+
+- select absolute weight threshold for edges.
+- show differences.
+- select/hilite taxa based on properties like sparsity.
+
+** 10 Oct 2023
+
+[[file:figure-one-network.R]] visualizes network/scatter data as below,
+
+[[file:figure-one-network.png]]
