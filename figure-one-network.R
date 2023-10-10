@@ -50,7 +50,7 @@ for(var.x in seq(1, N.taxa-1)){
 pair.dt <- rbindlist(pair.dt.list)
 text.dt <- rbindlist(text.dt.list)
 
-animint(
+viz <- animint(
   title=paste(data.name,"visualization"),
   network=ggplot()+
     ggtitle("Click edge to select pair")+
@@ -92,4 +92,9 @@ animint(
       angle=90,
       showSelected="pair",
       data=text.dt))
+viz
 
+if(FALSE){
+  remotes::install_github("animint/animint2@84-move-gallery-from-blocks-to-gh-pages")
+  animint2pages(viz, "necromass-figure-one-network")
+}

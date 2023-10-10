@@ -7,5 +7,6 @@
 ** 10 Oct 2023
 
 [[file:figure-one-network.R]] visualizes network/scatter data as below,
+(click image below to render interactive viz)
 
-[[file:figure-one-network.png]]
+[[https://tdhock.github.io/necromass-figure-one-network][file:figure-one-network.png]]
