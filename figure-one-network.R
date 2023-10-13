@@ -1,5 +1,6 @@
 library(animint2)
 library(data.table)
+
 data.name <- "bacteria_fungi_conservative"
 source_target.csv <- sprintf("necromass_%s_Pearson_source_target.csv", data.name)
 weight.dt <- fread(source_target.csv)
@@ -50,6 +51,32 @@ for(var.x in seq(1, N.taxa-1)){
 pair.dt <- rbindlist(pair.dt.list)
 text.dt <- rbindlist(text.dt.list)
 
+# Create the absolute_threshold values ranging from 0.0 to 1.0 with a step of 0.1
+absolute_threshold_values <- seq(0, 1, by = 0.1)
+
+# Initialize an empty list to store filtered data.tables
+filtered_data_list <- list()
+
+# Loop through each absolute_threshold value and filter rows accordingly
+for (threshold in absolute_threshold_values) {
+  filtered_data <- both.xy[abs(weight) >= threshold]
+  filtered_data[, absolute_threshold := threshold]
+  filtered_data_list[[as.character(threshold)]] <- filtered_data
+}
+# remove  both.xy from memory
+# rm(list = c("both.xy"))
+
+
+# Combine the filtered data.tables into a single data.table
+filtered_both.xy <- rbindlist(filtered_data_list)
+
+# Add a 'sign' column to the final data.table
+filtered_both.xy[, sign := ifelse(weight < 0, "negative", "positive")]
+
+# Now you have the modified 'both.xy' data.table with the 'absolute_threshold' column and filtered rows.
+```
+
+```{r}
 viz <- animint(
   title=paste(data.name,"visualization"),
   network=ggplot()+
@@ -70,7 +97,8 @@ viz <- animint(
       color=sign),
       alpha=0.6,
       clickSelects="pair",
-      data=both.xy)+
+      showSelected = "absolute_threshold",
+      data=filtered_both.xy)+
     geom_point(aes(
       x, y, fill=kingdom, tooltip=taxon),
       shape=21,
@@ -94,7 +122,7 @@ viz <- animint(
       data=text.dt))
 viz
 
-if(FALSE){
+if(F){
   remotes::install_github("animint/animint2@84-move-gallery-from-blocks-to-gh-pages")
   animint2pages(viz, "necromass-figure-one-network")
 }
