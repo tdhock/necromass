@@ -51,21 +51,20 @@ for(var.x in seq(1, N.taxa-1)){
 pair.dt <- rbindlist(pair.dt.list)
 text.dt <- rbindlist(text.dt.list)
 
-# Create the absolute_threshold values ranging from 0.0 to 1.0 with a step of 0.1
-absolute_threshold_values <- seq(0, 1, by = 0.1)
+# Create the abs_corr_threshold values ranging from 0.0 to 1.0 with a step of 0.1
+abs_corr_threshold_values <- seq(0, 1, by = 0.1)
 
 # Initialize an empty list to store filtered data.tables
 filtered_data_list <- list()
 
-# Loop through each absolute_threshold value and filter rows accordingly
-for (threshold in absolute_threshold_values) {
+# Loop through each abs_corr_threshold value and filter rows accordingly
+for (threshold in abs_corr_threshold_values) {
   filtered_data <- both.xy[abs(weight) >= threshold]
-  filtered_data[, absolute_threshold := threshold]
+  filtered_data[, abs_corr_threshold := threshold]
   filtered_data_list[[as.character(threshold)]] <- filtered_data
 }
 # remove  both.xy from memory
 # rm(list = c("both.xy"))
-
 
 # Combine the filtered data.tables into a single data.table
 filtered_both.xy <- rbindlist(filtered_data_list)
@@ -73,10 +72,8 @@ filtered_both.xy <- rbindlist(filtered_data_list)
 # Add a 'sign' column to the final data.table
 filtered_both.xy[, sign := ifelse(weight < 0, "negative", "positive")]
 
-# Now you have the modified 'both.xy' data.table with the 'absolute_threshold' column and filtered rows.
-```
+# Now you have the modified 'both.xy' data.table with the 'abs_corr_threshold' column and filtered rows.
 
-```{r}
 viz <- animint(
   title=paste(data.name,"visualization"),
   network=ggplot()+
@@ -97,7 +94,7 @@ viz <- animint(
       color=sign),
       alpha=0.6,
       clickSelects="pair",
-      showSelected = "absolute_threshold",
+      showSelected = "abs_corr_threshold",
       data=filtered_both.xy)+
     geom_point(aes(
       x, y, fill=kingdom, tooltip=taxon),
