@@ -1,6 +1,7 @@
 ```{r}
 library(animint2)
 library(data.table)
+library(reshape2)
 ```
 
 ```{r}
@@ -80,6 +81,45 @@ filtered_both.xy[, sign := ifelse(weight < 0, "negative", "positive")]
 ```
 
 ```{r}
+
+counts_dt <- filtered_both.xy[, .(count = .N), by = abs_corr_threshold]
+counts_dt
+```
+
+```{r}
+# Read the CSV file into R
+data <- fread("2023-10-23_11:59_pearson_agg.csv")
+
+# Convert the data into the desired format
+my_errors_dt <- data.table(
+  abs_corr_threshold = rep(data$reg_param_, each = 2),
+  set = rep(c("subtrain", "validation"), times = nrow(data)),
+  errors = c(data$subtrain_score_mean, data$validation_score_mean),
+  variable = "errors"
+)
+
+my_model_info <- data.table(
+  abs_corr_threshold = data$reg_param_,
+  num.edges = data$edges_mean
+)
+
+# Using reshape2 to melt the data
+my_model_info.tall <- melt(my_model_info, id.vars = "abs_corr_threshold")
+
+```
+
+```{r}
+my_set.label.select <- data.table(
+  abs_corr_threshold=range(my_errors_dt$abs_corr_threshold),
+  set=c("validation", "subtrain"),
+  hjust=c(1, 0))
+
+set.labels <- my_errors_dt[my_set.label.select, on=list(abs_corr_threshold, set)]
+set.labels
+```
+
+
+```{r}
 viz <- animint(
   title=paste(data.name,"visualization"),
   network=ggplot()+
@@ -101,13 +141,14 @@ viz <- animint(
       alpha=0.6,
       clickSelects="pair",
       showSelected = "abs_corr_threshold",
-      data=filtered_both.xy)+
+      data=filtered_both.xy) +
     geom_point(aes(
       x, y, fill=kingdom, tooltip=taxon),
       shape=21,
       size=4,
       data=taxa.dt)+
     scale_fill_manual(values=c(fungi="black", bacteria="white")),
+  
   scatter=ggplot()+
     ggtitle("Normalized abundance for selected pair")+
     geom_point(aes(
@@ -122,15 +163,58 @@ viz <- animint(
       -0.05, 0.5, label=taxon.y),
       angle=90,
       showSelected="pair",
-      data=text.dt))
+      data=text.dt),
+  
+
+  selectModel=ggplot()+
+    ggtitle("select absolute correlation threshold") +
+    geom_tallrect(aes(
+      xmin=abs_corr_threshold-0.1,
+      xmax=abs_corr_threshold+0.1 ),
+      clickSelects="abs_corr_threshold",
+      #showSelected = "abs_corr_threshold",
+      alpha=0.5,
+      data=my_model_info)+
+    theme_bw()+
+    theme(panel.margin=grid::unit(0, "lines"))+
+    geom_line(aes(
+      abs_corr_threshold, errors,
+      group=set, color=set),
+      data=my_errors_dt)+
+    facet_grid(variable ~ ., scales="free")+
+    geom_text(aes(
+    abs_corr_threshold, errors, label=set,
+    hjust=hjust,
+    color=set),
+    data=set.labels)+
+    guides(color="none")+
+    geom_line(aes(
+      abs_corr_threshold, value),
+      data=my_model_info.tall)
+  )
+
 viz
 
 if(F){
   remotes::install_github("animint/animint2@84-move-gallery-from-blocks-to-gh-pages")
-  animint2pages(viz, "necromass-figure-one-network")
+  animint2pages(viz, "EngineerDanny/necromass-figure-one-network")
 }
 ```
 
 ```{r}
-servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/RtmpxFUZbD/fileefec5382d375")
+servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/RtmpgANeDB/file1605a3825d9f")
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
