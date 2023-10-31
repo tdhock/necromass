@@ -40,42 +40,16 @@ both.xy[, sign := ifelse(weight<0, "negative", "positive")]
 pair.dt.list <- list()
 text.dt.list <- list()
 ```
-```{r}
-for(var.x in seq(1, N.taxa-1)){
-  for(var.y in seq(var.x+1, N.taxa)){
-    
-    pair <- get_pair(var.x, var.y)
-    data.x=scatter.dt[[var.x]]
-    data.y=scatter.dt[[var.y]]
-    
-      
-    pair.dt.list[[pair]] <- data.table(
-      pair,
-      data.x,
-      data.y
-    )
-    
-    text.dt.list[[pair]] <- data.table(
-      pair,
-      r_squared = cor(data.x, data.y),
-      sparsity = mean(c(data.x, data.y) == 0 ),
-      taxon.x=taxa.vec[var.x],
-      taxon.y=taxa.vec[var.y]
-    )
-  }
-}
-pair.dt <- rbindlist(pair.dt.list)
-text.dt <- rbindlist(text.dt.list)
-```
+
 
 ```{r}
 group_dict <- list(
   #G1 = list(name = "Group 1", start = 1, end = 69),
-  G2 = list(name = "Group 2", start = 1, end = 23),
-  G3 = list(name = "Group 3", start = 24, end = 35),
-  G4 = list(name = "Group 4", start = 36, end = 46),
-  G5 = list(name = "Group 5", start = 47, end = 57),
-  G6 = list(name = "Group 6", start = 58, end = 69)
+  G2 = list(name = "SoilM1M3", start = 1, end = 23),
+  G3 = list(name = "LowMelanM1", start = 24, end = 35),
+  G4 = list(name = "HighMelanM1", start = 36, end = 46),
+  G5 = list(name = "LowMelanM3", start = 47, end = 57),
+  G6 = list(name = "HighMelanM3", start = 58, end = 69)
 )
 options(warn = -1)
 
@@ -106,7 +80,7 @@ suppressWarnings({
         
         text.dt.list[[pair_group]] <- data.table(
           pair,
-          r_squared = cor(data.x, data.y),
+          p_cor = cor(data.x, data.y),
           sparsity = mean(c(data.x, data.y) == 0 ),
           taxon.x=taxa.vec[var.x],
           taxon.y=taxa.vec[var.y],
@@ -131,7 +105,7 @@ group.dt.list <- list()
 
 for (i in 1:ncol(group_comb)) {
   sub_dt <- text.dt[group %in% group_comb[, i]]
-  sub_dt[, r_squared_diff := diff(r_squared), by = pair]
+  sub_dt[, p_cor_diff := diff(p_cor), by = pair]
   sub_dt[, sparsity_diff := diff(sparsity), by = pair]
   sub_dt[, group_pair := paste(group_comb[, i], collapse = "-")]
   group.dt.list[[i]] <- sub_dt
@@ -248,14 +222,14 @@ viz <- animint(
   scatterSparsity=ggplot()+
     ggtitle("Scatter sparsity")+
     geom_point(aes(
-      r_squared, sparsity, color = group),
+      p_cor, sparsity, color = group),
       clickSelects="pair",
       data=text.dt),
   
   scatterSparsityDiff=ggplot()+
     ggtitle("Scatter sparsity difference")+
     geom_point(aes(
-      r_squared_diff, sparsity_diff, color = group_pair),
+      p_cor_diff, sparsity_diff, color = group_pair),
       clickSelects="pair",
       data=group.dt),
 
@@ -283,7 +257,8 @@ viz <- animint(
     guides(color="none")+
     geom_line(aes(
       abs_corr_threshold, value),
-      data=my_model_info.tall)
+      data=my_model_info.tall)+
+    scale_color_manual(values = c("subtrain" = "orange", "validation" = "purple"))
   
   #,out.dir = "~/Desktop/netviz"
   
@@ -299,7 +274,7 @@ if(F){
 ```
 
 ```{r}
-servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/RtmpKBFtYE/file7457281f4546")
+servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/RtmpKBFtYE/file745732613e5f")
 ```
 
 ```{r}
@@ -310,13 +285,34 @@ animint2pages(viz, "EngineerDanny/necromass-figure-one-network")
 
 
 ```{r}
-scatterSparsity=ggplot()+
-    ggtitle("Scatter Sparsity")+
-    geom_point(aes(
-      r_squared_diff, sparsity_diff, color = group_pair),
-      data=group.dt)
-  
-scatterSparsity
+  selectModel=ggplot()+
+    ggtitle("Select absolute correlation threshold") +
+    geom_tallrect(aes(
+      xmin=abs_corr_threshold-0.1,
+      xmax=abs_corr_threshold+0.1 ),
+      clickSelects="abs_corr_threshold",
+      #showSelected = "abs_corr_threshold",
+      alpha=0.5,
+      data=my_model_info)+
+    theme_bw()+
+    theme(panel.margin=grid::unit(0, "lines"))+
+    geom_line(aes(
+      abs_corr_threshold, errors,
+      group=set, color=set),
+      data=my_errors_dt)+
+    facet_grid(variable ~ ., scales="free")+
+    geom_text(aes(
+    abs_corr_threshold, errors, label=set,
+    hjust=hjust,
+    color=set),
+    data=set.labels)+
+    guides(color="none")+
+    geom_line(aes(
+      abs_corr_threshold, value),
+      data=my_model_info.tall)+
+    scale_color_manual(values = c("subtrain" = "orange", "validation" = "lightgreen"))
+
+selectModel
 
 ```
 
