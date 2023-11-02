@@ -45,7 +45,7 @@ text.dt.list <- list()
 ```{r}
 group_dict <- list(
   #G1 = list(name = "Group 1", start = 1, end = 69),
-  G2 = list(name = "SoilM1M3", start = 1, end = 23),
+  G2 = list(name = "AllSoilM1M3", start = 1, end = 23),
   G3 = list(name = "LowMelanM1", start = 24, end = 35),
   G4 = list(name = "HighMelanM1", start = 36, end = 46),
   G5 = list(name = "LowMelanM3", start = 47, end = 57),
@@ -206,7 +206,7 @@ viz <- animint(
   scatter=ggplot()+
     ggtitle("Normalized abundance for selected pair")+
     geom_point(aes(
-      data.x, data.y),
+      data.x, data.y, color = group),
       showSelected="pair",
       data=pair.dt)+
     geom_text(aes(
@@ -258,11 +258,9 @@ viz <- animint(
     geom_line(aes(
       abs_corr_threshold, value),
       data=my_model_info.tall)+
-    scale_color_manual(values = c("subtrain" = "orange", "validation" = "purple"))
-  
+    scale_color_manual(values = c("subtrain" = "orange", 
+                                  "validation" = "purple"))
   #,out.dir = "~/Desktop/netviz"
-  
-  
   )
 
 viz
@@ -274,53 +272,10 @@ if(F){
 ```
 
 ```{r}
-servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/RtmpKBFtYE/file745732613e5f")
+servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/Rtmpa17nP8/file1293b20b68e20")
 ```
 
 ```{r}
 remotes::install_github("animint/animint2@84-move-gallery-from-blocks-to-gh-pages")
 animint2pages(viz, "EngineerDanny/necromass-figure-one-network")
 ```
-
-
-
-```{r}
-  selectModel=ggplot()+
-    ggtitle("Select absolute correlation threshold") +
-    geom_tallrect(aes(
-      xmin=abs_corr_threshold-0.1,
-      xmax=abs_corr_threshold+0.1 ),
-      clickSelects="abs_corr_threshold",
-      #showSelected = "abs_corr_threshold",
-      alpha=0.5,
-      data=my_model_info)+
-    theme_bw()+
-    theme(panel.margin=grid::unit(0, "lines"))+
-    geom_line(aes(
-      abs_corr_threshold, errors,
-      group=set, color=set),
-      data=my_errors_dt)+
-    facet_grid(variable ~ ., scales="free")+
-    geom_text(aes(
-    abs_corr_threshold, errors, label=set,
-    hjust=hjust,
-    color=set),
-    data=set.labels)+
-    guides(color="none")+
-    geom_line(aes(
-      abs_corr_threshold, value),
-      data=my_model_info.tall)+
-    scale_color_manual(values = c("subtrain" = "orange", "validation" = "lightgreen"))
-
-selectModel
-
-```
-
-
-
-
-
-
-
-
-
