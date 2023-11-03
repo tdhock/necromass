@@ -292,14 +292,11 @@ if(F){
 ```
 
 ```{r}
-servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/Rtmpa17nP8/file1293b63997cd9")
+servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/RtmpBfsHkp/file133d75a5a974f")
 ```
 
 ```{r}
 remotes::install_github("animint/animint2@84-move-gallery-from-blocks-to-gh-pages")
-
-```
-
-```{r}
 animint2pages(viz, "EngineerDanny/necromass-figure-one-network")
+
 ```
