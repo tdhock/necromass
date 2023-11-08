@@ -313,39 +313,4 @@ animint2pages(viz, "EngineerDanny-necromass-figure-one-network")
 ```
 
 
-```{r}
-N <- 3
-set.seed(1)
-demo_df <- data.frame(i=1:N, num=rnorm(N,2))
-animint(
-  defaults=ggplot()+
-    ggtitle("Defaults, no color_off nor alpha_off")+
-    geom_tile(aes(
-      i, 0, fill=num),
-      clickSelects="i",
-      size=5,
-      data=demo_df)+
-    geom_point(aes(
-      i, num),
-      size=5,
-      clickSelects="i",
-      data=demo_df),
-  off=ggplot()+
-    ggtitle("User specified alpha_off and color_off")+
- 
-    geom_point(aes(
-      i, -num),
-      size=5,
-      alpha=1,
-      alpha_off=0.5,
-      color="red",
-      fill="grey",
-      color_off="black",
-      clickSelects="i",
-      data=demo_df))
 
-```
-
-```{r}
-servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/RtmpeFijeQ/file4680b604dcd")
-```
