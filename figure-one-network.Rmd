@@ -267,35 +267,28 @@ viz <- animint(
       data=text.dt),
   
   scatterSparsity=ggplot()+
-    ggtitle("Scatter sparsity")+
+    ggtitle("Select sparsity/p_cor level")+
     geom_point(aes(
       p_cor, sparsity, color = group),
       showSelected = c("pair","abs_corr_threshold"),
-      #color="red",
       color="black",
       size= 4,
-      #color_off="black",
-      #color_off="grey",
-      #alpha_off=0.2,
-      #alpha=1,
       data=filtered_text.dt)+
-    
-     geom_point(aes(
+    geom_point(aes(
       p_cor, sparsity, color = group),
       clickSelects="pair",
       showSelected = "abs_corr_threshold",
-      #color="red",
-      #fill="grey",
-      #size= 9,
-      #color_off="black",
-      #color_off="grey",
-      #alpha_off=0.2,
-      #alpha=1,
       data=filtered_text.dt),
   
   
   scatterSparsityDiff=ggplot()+
-    ggtitle("Scatter sparsity difference")+
+    ggtitle("Select sparsity/p_cor difference level")+
+    geom_point(aes(
+      p_cor_diff, sparsity_diff, color = group_pair),
+       showSelected = c("pair","abs_corr_threshold"),
+      color="black",
+      size= 4,
+      data=group.dt)+
     geom_point(aes(
       p_cor_diff, sparsity_diff, color = group_pair),
       clickSelects="pair",
@@ -311,7 +304,7 @@ viz
 ```
 
 ```{r}
-servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/RtmpeFijeQ/file46805e70eadd")
+servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/RtmpeFijeQ/file4680377a0647")
 ```
 
 ```{r}
