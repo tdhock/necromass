@@ -194,6 +194,35 @@ set.labels
 ```{r}
 viz <- animint(
   title=paste(data.name,"visualization"),
+  
+   selectModel=ggplot()+
+    ggtitle("Select absolute correlation threshold") +
+    geom_tallrect(aes(
+      xmin=abs_corr_threshold-0.1,
+      xmax=abs_corr_threshold+0.1),
+      clickSelects="abs_corr_threshold",
+      #showSelected = "abs_corr_threshold",
+      alpha=0.5,
+      data=my_model_info)+
+    theme_bw()+
+    theme(panel.margin=grid::unit(0, "lines"))+
+    geom_line(aes(
+      abs_corr_threshold, errors,
+      group=set, color=set),
+      data=my_errors_dt)+
+    facet_grid(variable ~ ., scales="free")+
+    geom_text(aes(
+    abs_corr_threshold, errors, label=set,
+    hjust=hjust,
+    color=set),
+    data=set.labels)+
+    guides(color="none")+
+    geom_line(aes(
+      abs_corr_threshold, value),
+      data=my_model_info.tall)+
+    scale_color_manual(values = c("subtrain" = "orange", 
+                                  "validation" = "purple")),
+  
   network=ggplot()+
     ggtitle("Click edge to select pair")+
     theme(
@@ -241,9 +270,29 @@ viz <- animint(
     ggtitle("Scatter sparsity")+
     geom_point(aes(
       p_cor, sparsity, color = group),
+      showSelected = c("pair","abs_corr_threshold"),
+      #color="red",
+      color="black",
+      size= 4,
+      #color_off="black",
+      #color_off="grey",
+      #alpha_off=0.2,
+      #alpha=1,
+      data=filtered_text.dt)+
+    
+     geom_point(aes(
+      p_cor, sparsity, color = group),
       clickSelects="pair",
       showSelected = "abs_corr_threshold",
+      #color="red",
+      #fill="grey",
+      #size= 9,
+      #color_off="black",
+      #color_off="grey",
+      #alpha_off=0.2,
+      #alpha=1,
       data=filtered_text.dt),
+  
   
   scatterSparsityDiff=ggplot()+
     ggtitle("Scatter sparsity difference")+
@@ -253,50 +302,57 @@ viz <- animint(
       showSelected = "abs_corr_threshold",
       data=group.dt),
 
-  selectModel=ggplot()+
-    ggtitle("Select absolute correlation threshold") +
-    geom_tallrect(aes(
-      xmin=abs_corr_threshold-0.1,
-      xmax=abs_corr_threshold+0.1),
-      clickSelects="abs_corr_threshold",
-      #showSelected = "abs_corr_threshold",
-      alpha=0.5,
-      data=my_model_info)+
-    theme_bw()+
-    theme(panel.margin=grid::unit(0, "lines"))+
-    geom_line(aes(
-      abs_corr_threshold, errors,
-      group=set, color=set),
-      data=my_errors_dt)+
-    facet_grid(variable ~ ., scales="free")+
-    geom_text(aes(
-    abs_corr_threshold, errors, label=set,
-    hjust=hjust,
-    color=set),
-    data=set.labels)+
-    guides(color="none")+
-    geom_line(aes(
-      abs_corr_threshold, value),
-      data=my_model_info.tall)+
-    scale_color_manual(values = c("subtrain" = "orange", 
-                                  "validation" = "purple"))
+ 
   #,out.dir = "~/Desktop/netviz"
+  source = "https://github.com/tdhock/necromass/blob/feat/add_absolute_threshold/figure-one-network.Rmd"
   )
 
 viz
-
-if(F){
-  remotes::install_github("animint/animint2@84-move-gallery-from-blocks-to-gh-pages")
-  animint2pages(viz, "EngineerDanny/necromass-figure-one-network")
-}
 ```
 
 ```{r}
-servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/RtmpBfsHkp/file133d75a5a974f")
+servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/RtmpeFijeQ/file46805e70eadd")
 ```
 
 ```{r}
 remotes::install_github("animint/animint2@84-move-gallery-from-blocks-to-gh-pages")
-animint2pages(viz, "EngineerDanny/necromass-figure-one-network")
+animint2pages(viz, "EngineerDanny-necromass-figure-one-network")
+```
 
+
+```{r}
+N <- 3
+set.seed(1)
+demo_df <- data.frame(i=1:N, num=rnorm(N,2))
+animint(
+  defaults=ggplot()+
+    ggtitle("Defaults, no color_off nor alpha_off")+
+    geom_tile(aes(
+      i, 0, fill=num),
+      clickSelects="i",
+      size=5,
+      data=demo_df)+
+    geom_point(aes(
+      i, num),
+      size=5,
+      clickSelects="i",
+      data=demo_df),
+  off=ggplot()+
+    ggtitle("User specified alpha_off and color_off")+
+ 
+    geom_point(aes(
+      i, -num),
+      size=5,
+      alpha=1,
+      alpha_off=0.5,
+      color="red",
+      fill="grey",
+      color_off="black",
+      clickSelects="i",
+      data=demo_df))
+
+```
+
+```{r}
+servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/RtmpeFijeQ/file4680b604dcd")
 ```
