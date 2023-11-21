@@ -81,7 +81,7 @@ suppressWarnings({
         text.dt.list[[pair_group]] <- data.table(
           pair,
           p_cor = cor(data.x, data.y),
-          sparsity = mean(c(data.x, data.y) == 0 ),
+          sparsity = mean(c(data.x, data.y) == 0),
           taxon.x=taxa.vec[var.x],
           taxon.y=taxa.vec[var.y],
           group =g$name
@@ -109,6 +109,18 @@ for (threshold in abs_corr_threshold_values) {
 filtered_text.dt <- rbindlist(filtered_text.dt_list)
 ```
 
+```{r}
+sparsity_threshold_values <- seq(0, 1, by = 0.1)
+sparsity_filtered_text.dt_list <- list()
+
+for (threshold in sparsity_threshold_values) {
+  sparsity_filtered_text.dt <- filtered_text.dt[abs(sparsity) >= threshold]
+  sparsity_filtered_text.dt[, sparsity_threshold := threshold]
+  sparsity_filtered_text.dt_list[[as.character(threshold)]] <- sparsity_filtered_text.dt
+}
+
+filtered_text.dt <- rbindlist(sparsity_filtered_text.dt_list)
+```
 
 ```{r}
 group_names <- unique(filtered_text.dt$group)
@@ -119,7 +131,6 @@ for (i in 1:ncol(group_comb)) {
   sub_dt <- filtered_text.dt[group %in% group_comb[, i]]
   sub_dt[, p_cor_diff := rep(diff(p_cor), length.out = .N), by = pair]
   sub_dt[, sparsity_diff := rep(diff(sparsity), length.out = .N), by = pair]
-  #sub_dt[, sparsity_diff := diff(sparsity), by = pair]
   sub_dt[, group_pair := paste(group_comb[, i], collapse = "-")]
   group.dt.list[[i]] <- sub_dt
 }
@@ -128,33 +139,39 @@ group.dt <- rbindlist(group.dt.list)
 
 
 ```{r}
-# Create the abs_corr_threshold values ranging from 0.0 to 1.0 with a step of 0.1
+# Create the abs_corr_threshold values ranging from 0.0 to 1.0 
+# with a step of 0.1
 abs_corr_threshold_values <- seq(0, 1, by = 0.1)
-
-# Initialize an empty list to store filtered data.tables
 filtered_data_list <- list()
-
-# Loop through each abs_corr_threshold value and filter rows accordingly
 for (threshold in abs_corr_threshold_values) {
   filtered_data <- both.xy[abs(weight) >= threshold]
   filtered_data[, abs_corr_threshold := threshold]
   filtered_data_list[[as.character(threshold)]] <- filtered_data
 }
-# remove  both.xy from memory
-# rm(list = c("both.xy"))
-# Combine the filtered data.tables into a single data.table
 filtered_both.xy <- rbindlist(filtered_data_list)
-
-# Add a 'sign' column to the final data.table
 filtered_both.xy[, sign := ifelse(weight < 0, "negative", "positive")]
 
 # Now you have the modified 'both.xy' data.table with the 'abs_corr_threshold' column and filtered rows.
-counts_dt <- filtered_both.xy[, .(count = .N), by = abs_corr_threshold]
-counts_dt
+# counts_dt <- filtered_both.xy[, .(count = .N), by = abs_corr_threshold]
+# counts_dt
 ```
 
+```{r}
+sparsity_threshold_values <- seq(0, 1, by = 0.1)
+filtered_data_list <- list()
+for (threshold in sparsity_threshold_values) {
+  filtered_data <- filtered_both.xy[abs(weight) >= threshold]
+  filtered_data[, abs_corr_threshold := threshold]
+  filtered_data_list[[as.character(threshold)]] <- filtered_data
+}
+filtered_both.xy <- rbindlist(filtered_data_list)
 
+```
 
+```{r}
+sparsity_counts_dt <- filtered_text.dt[, .(count = .N), by = sparsity_threshold]
+sparsity_counts_dt
+```
 
 ```{r}
 # Read the CSV file into R
@@ -189,8 +206,6 @@ set.labels
 ```
 
 
-
-
 ```{r}
 viz <- animint(
   title=paste(data.name,"visualization"),
@@ -222,6 +237,21 @@ viz <- animint(
       data=my_model_info.tall)+
     scale_color_manual(values = c("subtrain" = "orange", 
                                   "validation" = "purple")),
+  
+  selectSparsity=ggplot()+
+    ggtitle("Select Sparsity threshold") +
+    geom_tallrect(aes(
+      xmin=sparsity_threshold-0.1,
+      xmax=sparsity_threshold+0.1),
+      clickSelects="sparsity_threshold",
+      #showSelected = "abs_corr_threshold",
+      alpha=0.5,
+      data=sparsity_counts_dt)+
+    theme_bw()+
+    theme(panel.margin=grid::unit(0, "lines"))+
+    geom_line(aes(
+      sparsity_threshold, count),
+      data=sparsity_counts_dt),
   
   network=ggplot()+
     ggtitle("Click edge to select pair")+
@@ -270,14 +300,15 @@ viz <- animint(
     ggtitle("Select sparsity/p_cor level")+
     geom_point(aes(
       p_cor, sparsity, color = group),
-      showSelected = c("pair","abs_corr_threshold"),
+      showSelected = c("pair","abs_corr_threshold", "sparsity_threshold"),
       color="black",
       size= 4,
       data=filtered_text.dt)+
     geom_point(aes(
       p_cor, sparsity, color = group),
       clickSelects="pair",
-      showSelected = "abs_corr_threshold",
+      showSelected = c("abs_corr_threshold","sparsity_threshold"),
+      showSelected = c("abs_corr_threshold","sparsity_threshold"),
       data=filtered_text.dt),
   
   
@@ -297,14 +328,14 @@ viz <- animint(
 
  
   #,out.dir = "~/Desktop/netviz"
-  source = "https://github.com/tdhock/necromass/blob/feat/add_absolute_threshold/figure-one-network.Rmd"
+  source = "https://github.com/tdhock/necromass/blob/main/figure-one-network.Rmd"
   )
 
 viz
 ```
 
 ```{r}
-servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/RtmpeFijeQ/file4680377a0647")
+servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/RtmpvKnGAM/file29c622021e2")
 ```
 
 ```{r}
