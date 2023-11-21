@@ -1,7 +1,6 @@
 ```{r}
 library(animint2)
 library(data.table)
-library(reshape2)
 ```
 
 ```{r}
@@ -156,17 +155,6 @@ filtered_both.xy[, sign := ifelse(weight < 0, "negative", "positive")]
 # counts_dt
 ```
 
-```{r}
-sparsity_threshold_values <- seq(0, 1, by = 0.1)
-filtered_data_list <- list()
-for (threshold in sparsity_threshold_values) {
-  filtered_data <- filtered_both.xy[abs(weight) >= threshold]
-  filtered_data[, abs_corr_threshold := threshold]
-  filtered_data_list[[as.character(threshold)]] <- filtered_data
-}
-filtered_both.xy <- rbindlist(filtered_data_list)
-
-```
 
 ```{r}
 sparsity_counts_dt <- filtered_text.dt[, .(count = .N), by = sparsity_threshold]
@@ -193,9 +181,6 @@ my_model_info <- data.table(
 # Using reshape2 to melt the data
 my_model_info.tall <- melt(my_model_info, id.vars = "abs_corr_threshold")
 
-```
-
-```{r}
 my_set.label.select <- data.table(
   abs_corr_threshold=range(my_errors_dt$abs_corr_threshold),
   set=c("validation", "subtrain"),
@@ -203,7 +188,9 @@ my_set.label.select <- data.table(
 
 set.labels <- my_errors_dt[my_set.label.select, on=list(abs_corr_threshold, set)]
 set.labels
+
 ```
+
 
 
 ```{r}
@@ -335,7 +322,7 @@ viz
 ```
 
 ```{r}
-servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/RtmpvKnGAM/file29c622021e2")
+servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/RtmpvKnGAM/file29c3e1fa622")
 ```
 
 ```{r}
