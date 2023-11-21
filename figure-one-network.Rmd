@@ -295,7 +295,7 @@ viz <- animint(
       p_cor, sparsity, color = group),
       clickSelects="pair",
       showSelected = c("abs_corr_threshold","sparsity_threshold"),
-      showSelected = c("abs_corr_threshold","sparsity_threshold"),
+     
       data=filtered_text.dt),
   
   
@@ -303,14 +303,14 @@ viz <- animint(
     ggtitle("Select sparsity/p_cor difference level")+
     geom_point(aes(
       p_cor_diff, sparsity_diff, color = group_pair),
-       showSelected = c("pair","abs_corr_threshold"),
+       showSelected = c("pair","abs_corr_threshold", "sparsity_threshold"),
       color="black",
       size= 4,
       data=group.dt)+
     geom_point(aes(
       p_cor_diff, sparsity_diff, color = group_pair),
       clickSelects="pair",
-      showSelected = "abs_corr_threshold",
+      showSelected = c("abs_corr_threshold","sparsity_threshold"),
       data=group.dt),
 
  
@@ -322,7 +322,7 @@ viz
 ```
 
 ```{r}
-servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/RtmpvKnGAM/file29c3e1fa622")
+servr::httd("/private/var/folders/jf/1lv8wgr503396_w00202kgmw0000gp/T/RtmpvKnGAM/file29c6cae3f69")
 ```
 
 ```{r}
