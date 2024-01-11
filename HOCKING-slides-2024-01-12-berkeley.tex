@@ -51,10 +51,42 @@
 
 \maketitle
 
-
 \begin{frame}
-  \frametitle{Supervised learning for comparing }
+  \frametitle{Machine learning predictive analysis of qSIP data}
+  \begin{itemize}
+  \item Inputs/features $\mathbf x\in\mathbb R^D$ is vector of TODO for D genes
+    (Amplicon Sequence Variants / ASVs).
+  \item Output $y\in\mathbb R$ is relative activity/growth from qSIP.
+  \item Want to learn a function $f(x)=y$, using either experiment=qme
+    or experiment=dim (or both). TODO Jeff what is qme/dim?
+  \item Use cross-validation to quantify prediction error on held out
+    test set.
+  \end{itemize}
 \end{frame}
+
+% 1:       controls.between.sites       site <data.table[17225x8407]>
+% 2:  control.vs.carbon.additions  treatment <data.table[60877x8407]>
+% 3: controls.between.experiments experiment  <data.table[7710x8407]>
+% > length(gene.names <- grep("^K", names(qsip.dt), value=TRUE))
+% [1] 8380
+% > for(comparison.i in 1:nrow(comparison.dt)){
+% +   compare.row <- comparison.dt[comparison.i]
+% +   print(compare.row$DT[[1]][, .(rows=.N), by=eval(compare.row$group.var)])
+% + }
+%                 site rows
+% 1: glacier_forefield  767
+% 2: litchfield_island 1043
+% 3:                GL 3560
+% 4:                MC 3120
+% 5:                PJ 4317
+% 6:                PP 4418
+%    treatment  rows
+% 1:   control 17225
+% 2:         C 23214
+% 3:        CN 20438
+%    experiment rows
+% 1:        dim 3120
+% 2:        qme 4590
 
 \begin{frame}
   \includegraphics[width=\textwidth]{drawing-cv-same-other-1}
@@ -73,15 +105,52 @@
 \end{frame}
 
 \begin{frame}
-  TODO same fig
+  \frametitle{Interpreting machine learning results}
+  \begin{itemize}
+  \item Inputs/features $\mathbf x\in\mathbb D$ is vector of TODO for D genes
+    (Amplicon Sequence Variants / ASVs).
+  \item Output $y\in\mathbb R$ is relative activity/growth from qSIP.
+  \item Want to learn a function $f(x)=y$, using either experiment=qme
+    or experiment=dim (or both).
+  \item We compare two learning algorithms
+    \begin{description}
+    \item[cv\_glmnet:] L1 regularized linear model (LASSO), small
+      subset of important genes selected and used for prediction
+      (other un-important genes are not used for prediction).
+    \item[featureless] ignore all genes/features, and always predict
+      mean output in train set.
+    \end{description}
+  \item If there is any non-trivial relationship/pattern learned
+    between inputs and outputs, then \textbf{linear model should have
+      smaller prediction error than featureless}.
+  \item If patterns are similar in different groups/experiments (dim
+    and qme), then \textbf{linear model should have similar prediction
+      error, when trained on other groups/experiments}.
+  \end{itemize}
 \end{frame}
 
 \begin{frame}
-  TODO same+other fig
+  \includegraphics[width=\textwidth]{qsip_pc2_all_new-controls.between.experiments.same.png}
 \end{frame}
 
 \begin{frame}
-  TODO same+other+all fig
+  \includegraphics[width=\textwidth]{qsip_pc2_all_new-controls.between.experiments.same.ann.png}
+\end{frame}
+
+\begin{frame}
+  \includegraphics[width=\textwidth]{qsip_pc2_all_new-controls.between.experiments.same.ann2.png}
+\end{frame}
+
+\begin{frame}
+  \includegraphics[width=\textwidth]{qsip_pc2_all_new-controls.between.experiments.other.png}
+\end{frame}
+
+\begin{frame}
+  \includegraphics[width=\textwidth]{qsip_pc2_all_new-controls.between.experiments.other.ann.cpng}
+\end{frame}
+
+\begin{frame}
+  \includegraphics[width=\textwidth]{qsip_pc2_all_new-controls.between.experiments.all.png}
 \end{frame}
 
 \begin{frame}
