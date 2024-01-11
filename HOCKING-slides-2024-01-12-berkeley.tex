@@ -55,15 +55,43 @@
   \frametitle{Machine learning predictive analysis of qSIP data}
   \begin{itemize}
   \item Inputs/features $\mathbf x\in\mathbb R^D$ is vector of TODO for D genes
-    (Amplicon Sequence Variants / ASVs).
-  \item Output $y\in\mathbb R$ is relative activity/growth from qSIP.
-  \item Want to learn a function $f(x)=y$, using either experiment=qme
-    or experiment=dim (or both). TODO Jeff what is qme/dim?
-  \item Use cross-validation to quantify prediction error on held out
-    test set.
+    (Amplicon Sequence Variants / ASVs, range from 0 to 10).
+% !> (gene.tab <- table(as.matrix(gene.dt[1:100])))                               
+%      0      1      2      3      4      5      6      7      8      9     10
+% 718122 105630  10110   2301    807    362    180    113     87     66    222
+%  > gene.range.mat <- sapply(qsip.dt[, gene.names, with=FALSE], range)           
+% !> table(gene.range.mat)                                                        
+%  gene.range.mat
+%     0    1    2    3    4    5    6    7    8    9   10
+%  9212 3226 2018  990  510  241  151   81   80   65  186
+  \item Output $y\in\mathbb R$ is relative activity/growth per day
+    from qSIP (excess atom fraction/EAF normalized by maximum isotope enrichment
+    and incubation length, ranging from 0 to 0.3315).
+% > range(qsip.dt$growth_per_day)                                                
+% [1] 0.0000000 0.3315673
+  \item Want to learn $ f(\mathbf x)=y$ (predict growth from genes).
+  \item Hypothesis: expect we can learn $f$ on mixed conifer (MC) controls in experiment=dim (room temp), and accurately predict experiment=qme at temp=15C (or vice versa). TODO Jeff what is qme/dim?
+  \item Question: is this expectation consistent with the data?
+% There are several experiments that occurred in the same system multiple times. For example, MC (mixed conifer) is the Friends & Foes soil, so comparing qme MC controls and dim MC controls would probably have good prediction accuracy. Note that qme experiment doesn't have "controls" but incubation temperatures of 5 to 35 degrees. The dim experiment was performed at room temperature, so we could compare it to the 15 degree treatment.
+  \item Answer by using 10-fold cross-validation: train on one experiment or other, quantify prediction error on held out test set.
   \end{itemize}
 \end{frame}
-
+% > (select.dt <- data.table(site="MC", rbind(                                   
+% +   data.table(experiment="dim", treatment="control"),                         
+% +   data.table(experiment="qme", treatment="15"))))                            
+% site experiment treatment
+% 1:   MC        dim   control
+% 2:   MC        qme        15
+% > dim.qme.controls <- qsip.dt[select.dt, on=.(site,experiment,treatment)]      
+% compare <- function(comparison, group.var, DT){                                
+% > +   data.table(comparison, group.var, DT=list(DT))                           
+% }                                                                              
+%   + > comparison.dt <- rbind(                                                    
+%   +   compare("controls.between.sites", "site", control.only),                   
+%   +   compare("control.vs.carbon.additions", "treatment", qsip.dt[treatment %in%\
+%   c("C","CN","control")]),                                                      
+%   +   compare("controls.between.experiments", "experiment",dim.qme.controls))    
+%   comparison.dt                                                                  
 % 1:       controls.between.sites       site <data.table[17225x8407]>
 % 2:  control.vs.carbon.additions  treatment <data.table[60877x8407]>
 % 3: controls.between.experiments experiment  <data.table[7710x8407]>
@@ -84,9 +112,6 @@
 % 1:   control 17225
 % 2:         C 23214
 % 3:        CN 20438
-%    experiment rows
-% 1:        dim 3120
-% 2:        qme 4590
 
 \begin{frame}
   \includegraphics[width=\textwidth]{drawing-cv-same-other-1}
@@ -105,13 +130,20 @@
 \end{frame}
 
 \begin{frame}
-  \frametitle{Interpreting machine learning results}
+  \frametitle{Comparison 1: controls in different experiments}
   \begin{itemize}
-  \item Inputs/features $\mathbf x\in\mathbb D$ is vector of TODO for D genes
-    (Amplicon Sequence Variants / ASVs).
-  \item Output $y\in\mathbb R$ is relative activity/growth from qSIP.
-  \item Want to learn a function $f(x)=y$, using either experiment=qme
-    or experiment=dim (or both).
+%    experiment rows
+% 1:        dim 3120
+% 2:        qme 4590
+%   comparison.dt                                                                  
+% 1:       controls.between.sites       site <data.table[17225x8407]>
+% 2:  control.vs.carbon.additions  treatment <data.table[60877x8407]>
+% 3: controls.between.experiments experiment  <data.table[7710x8407]>
+% > length(gene.names <- grep("^K", names(qsip.dt), value=TRUE))
+% [1] 8380
+  \item Data table with $N=7710$ rows/observations (TODO), across two
+    experiments dim=3120, qme=4590.
+  \item $D=8380$ gene features.
   \item We compare two learning algorithms
     \begin{description}
     \item[cv\_glmnet:] L1 regularized linear model (LASSO), small
@@ -146,7 +178,7 @@
 \end{frame}
 
 \begin{frame}
-  \includegraphics[width=\textwidth]{qsip_pc2_all_new-controls.between.experiments.other.ann.cpng}
+  \includegraphics[width=\textwidth]{qsip_pc2_all_new-controls.between.experiments.other.ann.png}
 \end{frame}
 
 \begin{frame}
@@ -154,8 +186,63 @@
 \end{frame}
 
 \begin{frame}
+    \frametitle{Interpretation of linear model prediction error and weights/coefficientsc}
+    \begin{itemize}
+    \item Hypothesis was: expect we can learn $f$ on mixed conifer (MC) controls in experiment=dim (room temp), and accurately predict experiment=qme at temp=15C (or vice versa). 
+    \item Prediction error cross-validation analysis is not consistent with that hypothesis.
+    \item So there should be a different prediction function in each
+      experiment, what is the difference?
+    \item The L1 regularized linear model (LASSO) can be interpreted
+      in terms of which genes are important/used for prediction
+      (non-zero weights/coefficients) and others are ignored
+      (weights=0, not used for prediction).
+    \item Compute and plot weights which are non-zero/important in all 10
+      train/test splits of cross-validation.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
   \includegraphics[width=\textwidth]{2024-01-09-qsip_pc2_all_new-controls.between.experiments.weights.png}
 \end{frame}
+
+%   comparison.dt                                                                  
+% 1:       controls.between.sites       site <data.table[17225x8407]>
+% 2:  control.vs.carbon.additions  treatment <data.table[60877x8407]>
+% 3: controls.between.experiments experiment  <data.table[7710x8407]>
+% > length(gene.names <- grep("^K", names(qsip.dt), value=TRUE))
+% [1] 8380
+%    treatment  rows
+% 1:   control 17225
+% 2:         C 23214
+% 3:        CN 20438
+
+\begin{frame}
+  \frametitle{Comparison 2: control versus carbon additions}
+  \begin{itemize}
+  \item $N=60877$ samples total, in 3 groups/treatments: control=17225, C=23214, CN=20438.
+  \item Same $D=8380$ gene features.
+  \item Can we train on one group/treatment, and predict accurately on another?
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \includegraphics[width=\textwidth]{qsip_pc2_all_new-control.vs.carbon.additions.other.png}
+\end{frame}
+
+\begin{frame}
+  \includegraphics[width=\textwidth]{qsip_pc2_all_new-control.vs.carbon.additions.other.1.png}
+\end{frame}
+
+\begin{frame}
+  \includegraphics[width=\textwidth]{qsip_pc2_all_new-control.vs.carbon.additions.other.2.png}
+\end{frame}
+
+\begin{frame}
+  \includegraphics[width=\textwidth]{qsip_pc2_all_new-control.vs.carbon.additions.other.3.png}
+\end{frame}
+
+% I think comparing controls to carbon additions (C, CN, detritus, rhizo, cellulose, etc.) would be interesting and would likely have bad prediction accuracy. We are also interested in differences across systems, so comparing controls between sites would be great, too.
+
 
 \begin{frame}
   \frametitle{Discussion and conclusions}
