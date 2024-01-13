@@ -4,6 +4,12 @@
 - show differences.
 - select/hilite taxa based on properties like sparsity.
 
+** 12 Jan 2023
+
+[[file:HOCKING-slides-2024-01-12-berkeley.tex]] makes
+[[file:HOCKING-slides-2024-01-12-berkeley.pdf]] for presentation,
+based on qsip_pc2_all_new-* and drawing-cv-same-other* figures.
+
 ** 10 Oct 2023
 
 [[file:figure-one-network.R]] visualizes network/scatter data as below,
