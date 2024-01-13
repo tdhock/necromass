@@ -4,6 +4,58 @@
 - show differences.
 - select/hilite taxa based on properties like sparsity.
 
+** 8 Jan 2023
+
+[[file:data-qsip-jeff/qsip_pc2_all_new-analyze.R]] reads RData files and creates 
+- 6 test groups: [[file:data-qsip-jeff/qsip_pc2_all_new-controls.between.sites.png]]
+- 3 test groups: [[file:data-qsip-jeff/qsip_pc2_all_new-control.vs.carbon.additions.png]]
+- 2 test groups: [[file:data-qsip-jeff/qsip_pc2_all_new-controls.between.experiments.png]]
+
+#+BEGIN_SRC R
+> comparison.dt
+                     comparison  group.var                       DT
+1:       controls.between.sites       site <data.table[17225x8407]>
+2:  control.vs.carbon.additions  treatment <data.table[60877x8407]>
+3: controls.between.experiments experiment  <data.table[7710x8407]>
+> length(gene.names <- grep("^K", names(qsip.dt), value=TRUE))
+[1] 8380
+> for(comparison.i in 1:nrow(comparison.dt)){
++   compare.row <- comparison.dt[comparison.i]
++   print(compare.row$DT[[1]][, .(rows=.N), by=eval(compare.row$group.var)])
++ }
+                site rows
+1: glacier_forefield  767
+2: litchfield_island 1043
+3:                GL 3560
+4:                MC 3120
+5:                PJ 4317
+6:                PP 4418
+   treatment  rows
+1:   control 17225
+2:         C 23214
+3:        CN 20438
+   experiment rows
+1:        dim 3120
+2:        qme 4590
+#+END_SRC
+
+** 5 Jan 2023
+
+[[file:data-2023-12-22-benchmark.R]] makes
+[[file:data-2023-12-22-benchmark.RData]] with same/other experiment on
+necromass data. Next [[file:data-2023-12-22-benchmark-analyze.R]] makes
+[[file:data-2023-12-22-benchmark-analyze.png]] which visualizes the
+prediction error for every taxon and group. cv_glmnet seems to be
+better than featureless for most taxa, at least for train.groups=all.
+
+[[file:data-qsip-jeff/qsip_pc2_all_new.R]] runs same/other experiments on
+large qsip data set, making
+- [[file:data-qsip-jeff/qsip_pc2_all_new-controls.between.experiments.RData]]
+- and two more.
+
+[[file:data-qsip-linnea/qSIP_rates_tax.R]] loads Steve/Linneas data, not
+sure what to do with this, wrote email, waiting for response.
+
 ** 10 Oct 2023
 
 [[file:figure-one-network.R]] visualizes network/scatter data as below,
