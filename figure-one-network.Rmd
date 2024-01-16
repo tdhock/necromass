@@ -51,8 +51,6 @@ group_dict <- list(
   G6 = list(name = "HighMelanM3", start = 58, end = 69)
 )
 options(warn = -1)
-
-
 ```
 
 ```{r}
@@ -190,7 +188,9 @@ set.labels <- my_errors_dt[my_set.label.select, on=list(abs_corr_threshold, set)
 set.labels
 
 ```
-
+```{r}
+colSums(is.na(filtered_text.dt))
+```
 
 
 ```{r}
