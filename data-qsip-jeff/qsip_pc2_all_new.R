@@ -20,32 +20,52 @@ plot(growth_per_day ~ eaf, qsip.dt)
 ## The "growth_per_day" column is the output. Eaf is there, but we normalized by maximum isotope enrichment and the incubation length.
 
 ## Yes, I left a lot of metadata there in case we want to explore patterns with some of the taxonomic or functional categories. I guess we can ignore for now.
-
-## I think comparing controls to carbon additions (C, CN, detritus, rhizo, cellulose, etc.) would be interesting and would likely have bad prediction accuracy. We are also interested in differences across systems, so comparing controls between sites would be great, too.
-control.only <- qsip.dt[treatment=="control"]
-control.only[, .(rows=.N), by=site]
  
 ## There are several experiments that occurred in the same system multiple times. For example, MC (mixed conifer) is the Friends & Foes soil, so comparing qme MC controls and dim MC controls would probably have good prediction accuracy. Note that qme experiment doesn't have "controls" but incubation temperatures of 5 to 35 degrees. The dim experiment was performed at room temperature, so we could compare it to the 15 degree treatment.
+if(FALSE){
 qsip.dt[, .(rows=.N), by=.(site,experiment,treatment)]
 (select.dt <- data.table(site="MC", rbind(
   data.table(experiment="dim", treatment="control"),
   data.table(experiment="qme", treatment="15"))))
 dim.qme.controls <- qsip.dt[select.dt, on=.(site,experiment,treatment)]
-
+## I think comparing controls to carbon additions (C, CN, detritus, rhizo, cellulose, etc.) would be interesting and would likely have bad prediction accuracy. We are also interested in differences across systems, so comparing controls between sites would be great, too.
+control.only <- qsip.dt[treatment=="control"]
+control.only[, .(rows=.N), by=site]
+qsip.dt[, my.trt := ifelse(experiment=="drp", site, treatment)]
+qsip.dt[
+  my.trt %in% c("C","CN","Detritus","Rhizo","Cellulose","control"),
+  .(rows=.N),
+  by=.(experiment, site, treatment, my.trt)]
+}
+## TODO Another thought... maybe the same substrate added to different soils elicits a predictable response. Within the "dim" experiment, the exact same C was added to all sites along an elevation gradient, so maybe comparing the most similar sites given the same C amendments would have less error, so:
+## dim MC +C <=predicts=> dim PP +C
+## dim PP +C <= predicts => dim PJ +C
+## dim PJ +C <= predicts => dim GL +C
+## (Or same but with +CN)
+## When looking at the CN additions (2nd figure), training on all, same or different sites are all strongly predictive, and, again, the training on all is sometimes stronger. This seems like it can be interpreted as a consistent pattern in response to CN additions across soils! The C additions show a similar pattern (3rd figure), but not as pronounced.
+## This is also true, but not as pronounced, in the SRO exudate (slightly more complex C & N) additions (4th figure), although the "other" trained model looks slightly less predictive. Litter (complex C & N) addition tended to have the same pattern (5th figure). Like DIM, a comparison of SRO controls also shows little predictability across sites (6th figure).
 compare <- function(comparison, group.var, DT){
   data.table(comparison, group.var, DT=list(DT))
 }
+dim.only <- qsip.dt[experiment=="dim"]
+dim.only[, table(site, treatment)]
 comparison.dt <- rbind(
-  compare("controls.between.sites", "site", control.only),
-  compare("control.vs.carbon.additions", "treatment", qsip.dt[treatment %in% c("C","CN","control")]),
-  compare("controls.between.experiments", "experiment",dim.qme.controls))
+  ## compare("controls.between.sites", "site", control.only),
+  ## compare("control.vs.carbon.additions", "treatment", qsip.dt[treatment %in% c("C","CN","control")]),
+  ## compare("controls.between.experiments", "experiment",dim.qme.controls),
+  compare("dim.C.between.sites", "site", qsip.dt[experiment=="dim" & treatment=="C"]),
+  compare("dim.CN.combine.sites", "site", qsip.dt[experiment=="dim" & treatment=="CN"]),
+  compare("dim.compare.sites", "site", dim.only),
+  compare("dim.compare.treatments", "treatment", dim.only))
 comparison.dt
 length(gene.names <- grep("^K", names(qsip.dt), value=TRUE))
-gene.dt <- qsip.dt[, gene.names, with=FALSE]
-gene.tab <- table(as.matrix(gene.dt[1:100]))
-str(gene.tab)
-gene.range.mat <- sapply(gene.dt, range)
-table(gene.range.mat)
+if(FALSE){
+  gene.dt <- qsip.dt[, gene.names, with=FALSE]
+  gene.tab <- table(as.matrix(gene.dt[1:100]))
+  str(gene.tab)
+  gene.range.mat <- sapply(gene.dt, range)
+  table(gene.range.mat)
+}
 
 for(comparison.i in 1:nrow(comparison.dt)){
   compare.row <- comparison.dt[comparison.i]
@@ -53,11 +73,6 @@ for(comparison.i in 1:nrow(comparison.dt)){
 }
 
 
-qsip.dt[, my.trt := ifelse(experiment=="drp", site, treatment)]
-qsip.dt[
-  my.trt %in% c("C","CN","Detritus","Rhizo","Cellulose","control"),
-  .(rows=.N),
-  by=.(experiment, site, treatment, my.trt)]
 for(comparison.i in 1:nrow(comparison.dt)){
   compare.row <- comparison.dt[comparison.i]
   task.names <- c(
@@ -104,11 +119,13 @@ for(comparison.i in 1:nrow(comparison.dt)){
   reg.dir <- paste0("qsip_pc2_all_new-", compare.row$comparison)
   reg=batchtools::loadRegistry(reg.dir)
   print(batchtools::getStatus(reg=reg))
-  jobs.after <- batchtools::getJobTable(reg=reg)
-  table(jobs.after$error)
-  ids <- jobs.after[is.na(error), job.id]
-  bmr = mlr3batchmark::reduceResultsBatchmark(ids, reg = reg)
-  out.RData <- paste0(reg.dir, ".RData")
-  save(bmr, file=out.RData)
+  if(TRUE){
+    jobs.after <- batchtools::getJobTable(reg=reg)
+    table(jobs.after$error)
+    ids <- jobs.after[is.na(error), job.id]
+    bmr = mlr3batchmark::reduceResultsBatchmark(ids, reg = reg)
+    out.RData <- paste0(reg.dir, ".RData")
+    save(bmr, file=out.RData)
+  }
 }
 

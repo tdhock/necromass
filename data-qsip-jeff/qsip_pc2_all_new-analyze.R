@@ -30,10 +30,13 @@ for(RData.i in seq_along(RData.vec)){
       data=score.dt)+
     facet_grid(test.group ~ ., scales="free")+
     scale_x_log10()
-  score.dt[, `:=`(
-    "Test group" = gsub("_", "\n", paste0("\n", test.group)),
-    "Train\ngroups"=paste0("\n",train.groups)
-  )]
+  add_facet_vars <- function(DT){
+    DT[, `:=`(
+      "Test group" = gsub("_", "\n", paste0("\n", test.group)),
+      "Train\ngroups"=paste0("\n",train.groups)
+    )]
+  }
+  add_facet_vars(score.dt)
   gg <- ggplot()+
     ggtitle(tit)+
     theme(axis.text.x=element_text(angle=30, hjust=1))+
@@ -46,12 +49,63 @@ for(RData.i in seq_along(RData.vec)){
       scales="free",
       labeller=label_both)+
     scale_x_log10("Mean squared prediction error (test set)")
+  score.stats <- dcast(
+    score.dt,
+    train.groups + test.group + algorithm ~ .,
+    list(mean, sd, length),
+    value.var="regr.mse")
+  add_facet_vars(score.stats)
+  score.wide <- dcast(
+    score.dt[, log10.regr.mse := log10(regr.mse)],
+    test.fold + train.groups + test.group ~ algorithm,
+    value.var="log10.regr.mse")
+  featureless.p.values <- score.wide[, {
+    test.res <- t.test(
+      featureless,
+      cv_glmnet,
+      alternative = "greater",
+      paired=TRUE)
+    with(test.res, data.table(p.value, estimate))
+  }, by=.(train.groups,train.groups,test.group)]
+  score.wide.train <- dcast(
+    score.dt[algorithm=="cv_glmnet"],
+    test.fold + test.group ~ train.groups,
+    value.var="log10.regr.mse")
+  score.wide.train.compare <- melt(
+    score.wide.train,
+    measure.vars=c("all","other"),
+    variable.name="train.groups")
+  min.max.dt <- dcast(
+    score.dt,
+    test.group ~ .,
+    list(min, max),
+    value.var="log10.regr.mse"
+  )[, log10.regr.mse_mid := (log10.regr.mse_min+log10.regr.mse_max)/2]
+  train.p.values <- score.wide.train.compare[, {
+    test.res <- t.test(
+      value,
+      same,
+      alternative = "two.sided",
+      paired=TRUE)
+    with(test.res, data.table(algorithm="cv_glmnet", p.value, estimate))
+  }, by=.(train.groups,test.group)
+  ][
+    score.stats, on=c("train.groups","test.group","algorithm"), nomatch=0L
+  ][
+    min.max.dt, on=c("test.group"), nomatch=0L
+  ]
+  print(train.p.values[order(p.value), .(train.groups, test.group, p.value, estimate)])
+  glmnet.same <- score.stats[algorithm=="cv_glmnet" & train.groups=="same"]
   train.list <- list(
     same="same",
     other=c("same","other"),
     all=c("same","other","all"))
   for(suffix in names(train.list)){
-    some.scores <- score.dt[train.groups %in% train.list[[suffix]] ]
+    some <- function(DT){
+      DT[train.groups %in% train.list[[suffix]] ]
+    }
+    some.scores <- some(score.dt)
+    some.stats <- some(score.stats)
     gg <- ggplot()+
       ggtitle(tit)+
       theme(axis.text.x=element_text(angle=30, hjust=1))+
@@ -72,8 +126,49 @@ for(RData.i in seq_along(RData.vec)){
     png(comparison.png, height=3, width=(n.test+1)*1.5, units="in", res=200)
     print(gg)
     dev.off()
+    gg <- ggplot()+
+      ggtitle(tit)+
+      theme_bw()+
+      theme(axis.text.x=element_text(angle=30, hjust=1))+
+      geom_vline(aes(
+        xintercept=regr.mse_mean),
+        data=glmnet.same[, .(regr.mse_mean, `Test group`)],
+        color="grey50")+
+      geom_text(aes(
+        regr.mse_mean, algorithm,
+        hjust=ifelse(
+          log10(regr.mse_mean)<log10.regr.mse_mid,
+          0, 1),
+        label=ifelse(
+          p.value<0.0001,
+          "p<0.0001",
+          sprintf("p=%.4f",p.value))),
+        vjust=-0.8,
+        size=3,
+        data=some(train.p.values))+
+      geom_point(aes(
+        regr.mse_mean, algorithm),
+        shape=1,
+        data=some.stats)+
+      geom_segment(aes(
+        regr.mse_mean+regr.mse_sd, algorithm,
+        xend=regr.mse_mean-regr.mse_sd, yend=algorithm),
+        data=some.stats)+
+      geom_blank(aes(
+        regr.mse, algorithm),
+        data=score.dt)+
+      facet_grid(
+        `Train\ngroups` ~ `Test group`,
+        scales="free",
+        labeller=label_both)+
+      scale_x_log10("Mean squared prediction error (test set)")
+    print(comparison.png <- sub("RData", paste0(suffix, "-stats.png"), comparison.RData))
+    png(comparison.png, height=3.1, width=(n.test+1)*1.5, units="in", res=200)
+    print(gg)
+    dev.off()
   }
 }
+
 weight.dt <- fread(
   "qsip_pc2_all_new-controls.between.experiments.weights.csv"
 )[, `:=`(
