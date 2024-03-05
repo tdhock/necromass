@@ -174,7 +174,7 @@ for(RData.i in seq_along(RData.vec)){
       geom_segment(aes(
         regr.mse_mean+regr.mse_sd, algorithm,
         xend=regr.mse_mean-regr.mse_sd, yend=algorithm),
-        size=1,
+        linewidth=1,
         data=some.stats)+
       geom_segment(aes(
         same_mean, algorithm,
@@ -188,9 +188,10 @@ for(RData.i in seq_along(RData.vec)){
         `Train\ngroups` ~ Rows + `Test group`,
         scales="free",
         labeller=label_both)+
-      scale_x_log10("Mean squared prediction error (test set)")
+      scale_x_log10(
+        "Mean squared prediction error on test set\n(mean +/- SD over 10 folds, log scale, paired t-test in red)")
     print(comparison.png <- sub("RData", paste0(suffix, "-stats.png"), comparison.RData))
-    png(comparison.png, height=3.3, width=(n.test+1)*1.5, units="in", res=200)
+    png(comparison.png, height=3.5, width=(n.test+1)*1.5, units="in", res=200)
     print(gg)
     dev.off()
   }
