@@ -8,6 +8,11 @@ for(RData.i in seq_along(RData.vec)){
   tit <- gsub("[.]", " ", comparison)
   (objs <- load(comparison.RData))
   score.dt <- mlr3resampling::score(bmr)
+  score.dt[, n.test := sapply(test, length)]
+  score.dt[, .(n.data=sum(n.test)), keyby=.(test.group, train.groups)]
+  n.dt <- score.dt[train.groups=="same", .(
+    n.data=sum(n.test)
+  ), by=test.group]
   score.dt[1]
   glmnet.dt <- score.dt[algorithm=="cv_glmnet"]
   weight.dt.list <- list()
@@ -34,9 +39,14 @@ for(RData.i in seq_along(RData.vec)){
     DT[, `:=`(
       "Test group" = gsub("_", "\n", paste0("\n", test.group)),
       "Train\ngroups"=paste0("\n",train.groups)
-    )]
+    )][
+      n.dt,
+      Rows := n.data,
+      on="test.group"
+    ]
   }
   add_facet_vars(score.dt)
+  p.color <- "red"
   gg <- ggplot()+
     ggtitle(tit)+
     theme(axis.text.x=element_text(angle=30, hjust=1))+
@@ -81,6 +91,13 @@ for(RData.i in seq_along(RData.vec)){
     list(min, max),
     value.var="log10.regr.mse"
   )[, log10.regr.mse_mid := (log10.regr.mse_min+log10.regr.mse_max)/2]
+  glmnet.same <- score.stats[
+    algorithm=="cv_glmnet" & train.groups=="same"
+  ][
+  , same_mean := regr.mse_mean
+  ][]
+  vline.dt <- glmnet.same[
+  , .(same_mean, `Test group`, Rows)]
   train.p.values <- score.wide.train.compare[, {
     test.res <- t.test(
       value,
@@ -93,9 +110,10 @@ for(RData.i in seq_along(RData.vec)){
     score.stats, on=c("train.groups","test.group","algorithm"), nomatch=0L
   ][
     min.max.dt, on=c("test.group"), nomatch=0L
+  ][
+    glmnet.same[, .(same_mean, test.group)], on=c("test.group")
   ]
   print(train.p.values[order(p.value), .(train.groups, test.group, p.value, estimate)])
-  glmnet.same <- score.stats[algorithm=="cv_glmnet" & train.groups=="same"]
   train.list <- list(
     same="same",
     other=c("same","other"),
@@ -129,10 +147,12 @@ for(RData.i in seq_along(RData.vec)){
     gg <- ggplot()+
       ggtitle(tit)+
       theme_bw()+
-      theme(axis.text.x=element_text(angle=30, hjust=1))+
+      theme(
+        panel.spacing=grid::unit(0, "lines"),
+        axis.text.x=element_text(angle=30, hjust=1))+
       geom_vline(aes(
-        xintercept=regr.mse_mean),
-        data=glmnet.same[, .(regr.mse_mean, `Test group`)],
+        xintercept=same_mean),
+        data=vline.dt,
         color="grey50")+
       geom_text(aes(
         regr.mse_mean, algorithm,
@@ -143,6 +163,7 @@ for(RData.i in seq_along(RData.vec)){
           p.value<0.0001,
           "p<0.0001",
           sprintf("p=%.4f",p.value))),
+        color=p.color,
         vjust=-0.8,
         size=3,
         data=some(train.p.values))+
@@ -153,17 +174,23 @@ for(RData.i in seq_along(RData.vec)){
       geom_segment(aes(
         regr.mse_mean+regr.mse_sd, algorithm,
         xend=regr.mse_mean-regr.mse_sd, yend=algorithm),
+        size=1,
         data=some.stats)+
+      geom_segment(aes(
+        same_mean, algorithm,
+        xend=regr.mse_mean, yend=algorithm),
+        data=some(train.p.values),
+        color=p.color)+
       geom_blank(aes(
         regr.mse, algorithm),
         data=score.dt)+
       facet_grid(
-        `Train\ngroups` ~ `Test group`,
+        `Train\ngroups` ~ Rows + `Test group`,
         scales="free",
         labeller=label_both)+
       scale_x_log10("Mean squared prediction error (test set)")
     print(comparison.png <- sub("RData", paste0(suffix, "-stats.png"), comparison.RData))
-    png(comparison.png, height=3.1, width=(n.test+1)*1.5, units="in", res=200)
+    png(comparison.png, height=3.3, width=(n.test+1)*1.5, units="in", res=200)
     print(gg)
     dev.off()
   }
