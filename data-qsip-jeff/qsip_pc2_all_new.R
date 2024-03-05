@@ -8,7 +8,14 @@ qsip.dt[, .(rows=.N), by=site]
 qsip.dt[, .(rows=.N), by=treatment]
 qsip.dt[, .(rows=.N), by=time]
 qsip.dt[, .(rows=.N), by=isotope]#2 groups.
-
+qsip.dim.C <- qsip.dt[
+  experiment=="dim" & treatment=="C"
+][, y := growth_per_day]
+length(gene.names <- grep("^K", names(qsip.dt), value=TRUE))
+out.names <- c("site","y",gene.names)
+fwrite(
+  qsip.dim.C[, out.names, with=FALSE],
+  "~/genomic-ml/projects/cv-same-other-paper/data_Regr_qsip_dim_C.csv")
 hist(qsip.dt$eaf)
 hist(qsip.dt$growth_per_day)
 range(qsip.dt$growth_per_day)
@@ -58,7 +65,6 @@ comparison.dt <- rbind(
   compare("dim.compare.sites", "site", dim.only),
   compare("dim.compare.treatments", "treatment", dim.only))
 comparison.dt
-length(gene.names <- grep("^K", names(qsip.dt), value=TRUE))
 if(FALSE){
   gene.dt <- qsip.dt[, gene.names, with=FALSE]
   gene.tab <- table(as.matrix(gene.dt[1:100]))
