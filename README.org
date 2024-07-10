@@ -3,6 +3,16 @@
 - select absolute weight threshold for edges.
 - show differences.
 - select/hilite taxa based on properties like sparsity.
+** 10 July 2024
+[[file:data-qsip-jeff/figure-scatter/]] directory has analysis of 7 SOAK experiments.
+
+[[file:data-qsip-jeff/figure-scatter/figure-scatter-print.R]] makes
+
+[[file:data-qsip-jeff/figure-scatter/figure-scatter-print.png]]
+
+[[file:data-qsip-jeff/figure-scatter/figure-scatter-interactive.R]] makes https://tdhock.github.io/2024-07-10-error-predict-qsip/ (screenshot below)
+
+[[file:data-qsip-jeff/figure-scatter/figure-scatter-interactive.png]]
 
 ** 12 Jan 2023
 
