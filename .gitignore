@@ -8,3 +8,4 @@
 *.csv
 *.zip
 *.DS_Store
+*.RData
